@@ -1,4 +1,13 @@
+import { useState } from "react"
+import NovaViagemModal from "../components/NovaViagemModal"
+
 function Dashboard() {
+    const [modalAberto, setModalAberto] = useState(false)
+    const [viagens, setViagens] = useState([])
+
+    function salvarViagem(dados) {
+    setViagens([...viagens, dados])
+    }
   return (
     <div className="min-h-screen bg-gray-50">
       <header className="bg-white shadow-sm px-6 py-4 flex items-center justify-between">
@@ -9,7 +18,9 @@ function Dashboard() {
       <main className="max-w-4xl mx-auto p-6">
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-2xl font-bold text-gray-800">Minhas Viagens</h2>
-          <button className="bg-indigo-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-indigo-700 transition">
+          <button
+            onClick={() => setModalAberto(true)} 
+            className="bg-indigo-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-indigo-700 transition">
             + Nova Viagem
           </button>
         </div>
@@ -20,6 +31,12 @@ function Dashboard() {
           <p className="text-sm mt-1">Clique em "Nova Viagem" para começar!</p>
         </div>
       </main>
+      {modalAberto && (
+    <NovaViagemModal
+        onClose={() => setModalAberto(false)}
+        onSalvar={salvarViagem}
+    />
+)}
     </div>
   )
 }
