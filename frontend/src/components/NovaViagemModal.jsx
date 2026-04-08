@@ -1,8 +1,31 @@
+import { useState } from "react"
+
 function NovaViagemModal({ onClose, onSalvar }) {
+  const [sugestoes, setSugestoes] = useState([])
+  const [destino, setDestino] = useState("")
+
+  async function buscarCidades(texto) {
+    setDestino(texto)
+    if (texto.length < 3) {
+      setSugestoes([])
+      return
+    }
+    const res = await fetch(
+      `https://nominatim.openstreetmap.org/search?q=${texto}&format=json&limit=5&featuretype=city`
+    )
+    const data = await res.json()
+    setSugestoes(data)
+  }
+
+  function selecionarCidade(nome) {
+    setDestino(nome)
+    setSugestoes([])
+  }
+
   function handleSubmit(e) {
     e.preventDefault()
     const dados = {
-      destino: e.target.destino.value,
+      destino,
       dataIda: e.target.dataIda.value,
       dataVolta: e.target.dataVolta.value,
       descricao: e.target.descricao.value,
@@ -21,15 +44,29 @@ function NovaViagemModal({ onClose, onSalvar }) {
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
+          <div className="relative">
             <label className="block text-sm font-medium text-gray-700 mb-1">Destino</label>
             <input
-              name="destino"
               type="text"
+              value={destino}
+              onChange={(e) => buscarCidades(e.target.value)}
               placeholder="Ex: Paris, França"
               required
               className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-400"
             />
+            {sugestoes.length > 0 && (
+              <ul className="absolute z-10 bg-white border border-gray-200 rounded-lg w-full mt-1 shadow-lg">
+                {sugestoes.map((s, i) => (
+                  <li
+                    key={i}
+                    onClick={() => selecionarCidade(s.display_name)}
+                    className="px-4 py-2 text-sm text-gray-700 hover:bg-indigo-50 cursor-pointer"
+                  >
+                    {s.display_name}
+                  </li>
+                ))}
+              </ul>
+            )}
           </div>
 
           <div className="flex gap-4">
