@@ -1,52 +1,62 @@
 # ✈️ PlanIt
 
-Aplicação web para organizar e planejar viagens de forma simples e intuitiva.
+Aplicação web para organizar e planejar viagens de forma simples e intuitiva. Monitore os seus destinos, crie roteiros diários e tenha o controle dos gastos da sua viagem num só lugar.
 
 ## 🚀 Tecnologias
 
-- React
-- Vite
-- Tailwind CSS
-- React Router DOM
+- [React](https://react.dev/)
+- [Vite](https://vitejs.dev/)
+- [Tailwind CSS](https://tailwindcss.com/)
+- [React Router DOM](https://reactrouter.com/)
+- **LocalStorage API** (para persistência de dados no navegador)
 
 ## 📋 Funcionalidades
 
-- [x] Tela de Login
-- [x] Tela de Cadastro
-- [x] Dashboard com listagem de viagens
-- [x] Criar nova viagem
-- [x] Tela de detalhes da viagem
-- [ ] Salvar viagens (localStorage)
-- [ ] Editar viagem
-- [ ] Deletar viagem
+- [x] Tela de Login e Cadastro
+- [x] Dashboard com listagem e busca rápida de viagens
+- [x] Criar, visualizar detalhes, editar e deletar viagens
+- [x] Gerenciamento de passeios e pontos turísticos (com data, horário, categoria e valor)
+- [x] Cálculo automático de custos estimados (por pessoa e total)
+- [x] Salvar viagens localmente (via `localStorage`)
 
 ## 💻 Como rodar o projeto
 
-```bash
-# Instalar dependências
-npm install
+1. Clone o repositório ou baixe o código.
+2. Acesse a pasta raiz e instale as dependências:
 
-# Rodar em desenvolvimento
+```bash
+npm install
+```
+
+3. Inicie o servidor de desenvolvimento:
+
+```bash
 npm run dev
 ```
 
-Acesse http://localhost:5173 no navegador.
+4. Acesse [http://localhost:5173](http://localhost:5173) no seu navegador.
 
-## 📁 Estrutura de pastas
+## 📁 Estrutura de pastas principal
 
-```
+```text
 src/
-├── pages/
-│   ├── Login.jsx
+├── components/       # Componentes modulares e reutilizáveis (ex: Modais)
+│   ├── ConfirmModal.jsx
+│   ├── NovaViagemModal.jsx
+│   └── PontoTuristicoModal.jsx
+├── data/             # Dados estáticos (ex: destinos, formatação BRL)
+├── hooks/            # Hooks customizados (ex: useViagens para operações CRUD)
+├── pages/            # Páginas principais da aplicação
 │   ├── Cadastro.jsx
 │   ├── Dashboard.jsx
-│   └── DetalhesViagem.jsx
-├── components/
-│   └── NovaViagemModal.jsx
-├── App.jsx
-└── index.css
+│   ├── DetalhesViagem.jsx
+│   └── Login.jsx
+├── App.jsx           # Configuração das rotas
+└── index.css         # Estilos globais (Tailwind CSS)
 ```
 
-## 🛠️ Em desenvolvimento
+## 🛠️ Próximos Passos / Melhorias Futuras
 
-Projeto em construção. Novas funcionalidades em breve!
+- [ ] Integração com backend / banco de dados real
+- [ ] Exportação de roteiros em PDF
+- [ ] Compartilhamento de viagens com outros usuários
