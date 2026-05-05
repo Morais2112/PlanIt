@@ -9,6 +9,18 @@ import {
 import PontoTuristicoModal from "../components/PontoTuristicoModal"
 import ConfirmModal from "../components/ConfirmModal"
 
+// Ordena pontos por hora (sem hora vai pro fim)
+function ordenarPorHora(lista) {
+  return [...lista].sort((a, b) => {
+    const ha = a.hora || ""
+    const hb = b.hora || ""
+    if (!ha && !hb) return 0
+    if (!ha) return 1
+    if (!hb) return -1
+    return ha.localeCompare(hb)
+  })
+}
+
 function DetalhesViagem() {
   const { id } = useParams()
   const navigate = useNavigate()
@@ -17,14 +29,17 @@ function DetalhesViagem() {
     adicionarPonto,
     atualizarPonto,
     removerPonto,
+    atualizarNotaDia,
   } = useViagens()
 
   const viagem = viagens.find((v) => v.id === id)
+  const pessoas = Math.max(1, Number(viagem?.pessoas) || 1)
 
   const [modalAberto, setModalAberto] = useState(false)
   const [pontoEditando, setPontoEditando] = useState(null)
   const [diaInicialModal, setDiaInicialModal] = useState(null)
   const [pontoParaExcluir, setPontoParaExcluir] = useState(null)
+  const [overDia, setOverDia] = useState(null)
 
   const dias = useMemo(
     () => (viagem ? calcularDiasViagem(viagem.dataIda, viagem.dataVolta) : []),
@@ -41,6 +56,10 @@ function DetalhesViagem() {
         const chave =
           p.dia != null && grupos[p.dia] !== undefined ? p.dia : "sem"
         grupos[chave].push(p)
+      })
+      // ordena cada grupo por hora
+      Object.keys(grupos).forEach((k) => {
+        grupos[k] = ordenarPorHora(grupos[k])
       })
     }
     return grupos
@@ -59,13 +78,15 @@ function DetalhesViagem() {
     }))
   }, [viagem])
 
-  const total = useMemo(() => {
+  const subtotalIndividual = useMemo(() => {
     if (!viagem) return 0
     return (viagem.pontosTuristicos || []).reduce(
       (acc, p) => acc + (Number(p.valor) || 0),
       0
     )
   }, [viagem])
+
+  const total = subtotalIndividual * pessoas
 
   if (!viagem) {
     return (
@@ -108,19 +129,20 @@ function DetalhesViagem() {
     }
   }
 
-  function adicionarSugerido(sugerido, dia = null) {
+  function adicionarSugerido(sugerido) {
     if (sugerido.jaAdicionado) return
     adicionarPonto(viagem.id, {
       nome: sugerido.nome,
       valor: sugerido.valor,
       categoria: sugerido.categoria,
-      dia,
+      dia: null,
+      hora: "",
     })
   }
 
   function moverParaDia(ponto, novoDia) {
     atualizarPonto(viagem.id, ponto.id, {
-      dia: novoDia === "" ? null : Number(novoDia),
+      dia: novoDia === "" || novoDia == null ? null : Number(novoDia),
     })
   }
 
@@ -131,24 +153,75 @@ function DetalhesViagem() {
     }
   }
 
+  // Drag and drop handlers
+  function handleDragStart(e, ponto) {
+    e.dataTransfer.setData("text/planit-ponto", ponto.id)
+    e.dataTransfer.effectAllowed = "move"
+  }
+
+  function handleDragOver(e, chaveDia) {
+    e.preventDefault()
+    e.dataTransfer.dropEffect = "move"
+    if (overDia !== chaveDia) setOverDia(chaveDia)
+  }
+
+  function handleDragLeave() {
+    setOverDia(null)
+  }
+
+  function handleDrop(e, chaveDia) {
+    e.preventDefault()
+    const pontoId = e.dataTransfer.getData("text/planit-ponto")
+    if (pontoId) {
+      const novoDia = chaveDia === "sem" ? null : Number(chaveDia)
+      atualizarPonto(viagem.id, pontoId, { dia: novoDia })
+    }
+    setOverDia(null)
+  }
+
   const bandeira = destinos[viagem.destino]?.bandeira || "📍"
 
-  function subtotal(lista) {
-    return lista.reduce((acc, p) => acc + (Number(p.valor) || 0), 0)
+  function subtotalDia(lista) {
+    const soma = lista.reduce((acc, p) => acc + (Number(p.valor) || 0), 0)
+    return soma * pessoas
   }
 
   function PontoCard({ ponto }) {
     return (
-      <li className="py-3 flex items-center justify-between gap-3">
-        <div className="min-w-0 flex-1">
-          <p className="font-medium text-gray-800 truncate">{ponto.nome}</p>
-          <div className="flex flex-wrap items-center gap-2 mt-1 text-xs">
-            <span className="bg-indigo-50 text-indigo-700 px-2 py-0.5 rounded-full">
-              {ponto.categoria}
-            </span>
-            <span className="text-gray-500">
-              {ponto.valor > 0 ? formatarBRL(ponto.valor) : "Gratuito"}
-            </span>
+      <li
+        draggable
+        onDragStart={(e) => handleDragStart(e, ponto)}
+        className="py-3 flex items-center justify-between gap-3 cursor-move group"
+        title="Arraste para outro dia"
+      >
+        <div className="min-w-0 flex-1 flex items-center gap-2">
+          <span className="text-gray-300 group-hover:text-gray-500 select-none">
+            ⋮⋮
+          </span>
+          <div className="min-w-0 flex-1">
+            <p className="font-medium text-gray-800 truncate">
+              {ponto.hora && (
+                <span className="text-indigo-600 mr-2 font-mono text-sm">
+                  {ponto.hora}
+                </span>
+              )}
+              {ponto.nome}
+            </p>
+            <div className="flex flex-wrap items-center gap-2 mt-1 text-xs">
+              <span className="bg-indigo-50 text-indigo-700 px-2 py-0.5 rounded-full">
+                {ponto.categoria}
+              </span>
+              <span className="text-gray-500">
+                {ponto.valor > 0
+                  ? `${formatarBRL(ponto.valor)} / pessoa`
+                  : "Gratuito"}
+              </span>
+              {ponto.valor > 0 && pessoas > 1 && (
+                <span className="text-gray-400">
+                  = {formatarBRL(ponto.valor * pessoas)}
+                </span>
+              )}
+            </div>
           </div>
         </div>
         <div className="flex items-center gap-2">
@@ -186,6 +259,29 @@ function DetalhesViagem() {
     )
   }
 
+  function NotaDoDia({ chave }) {
+    const valorAtual = viagem.notasPorDia?.[String(chave)] ?? ""
+    const [texto, setTexto] = useState(valorAtual)
+    return (
+      <textarea
+        value={texto}
+        onChange={(e) => setTexto(e.target.value)}
+        onBlur={() => {
+          if (texto !== valorAtual) {
+            atualizarNotaDia(
+              viagem.id,
+              chave === "sem" ? null : chave,
+              texto
+            )
+          }
+        }}
+        placeholder="Notas do dia: lembretes, reservas, restaurantes..."
+        rows={2}
+        className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 mt-3 focus:outline-none focus:ring-2 focus:ring-indigo-400 resize-none bg-gray-50/50"
+      />
+    )
+  }
+
   const pontosSemDia = pontosPorDia.sem || []
 
   return (
@@ -217,26 +313,32 @@ function DetalhesViagem() {
 
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
             <div className="bg-gray-50 rounded-xl p-4 text-center">
-              <p className="text-2xl mb-1">🗓️</p>
-              <p className="text-sm text-gray-500">Ida</p>
-              <p className="font-semibold text-gray-800 text-sm">{viagem.dataIda}</p>
-            </div>
-            <div className="bg-gray-50 rounded-xl p-4 text-center">
-              <p className="text-2xl mb-1">🏠</p>
-              <p className="text-sm text-gray-500">Volta</p>
-              <p className="font-semibold text-gray-800 text-sm">{viagem.dataVolta}</p>
-            </div>
-            <div className="bg-gray-50 rounded-xl p-4 text-center">
               <p className="text-2xl mb-1">📅</p>
               <p className="text-sm text-gray-500">Duracao</p>
               <p className="font-semibold text-gray-800 text-sm">
                 {dias.length} {dias.length === 1 ? "dia" : "dias"}
               </p>
             </div>
+            <div className="bg-gray-50 rounded-xl p-4 text-center">
+              <p className="text-2xl mb-1">👥</p>
+              <p className="text-sm text-gray-500">Viajantes</p>
+              <p className="font-semibold text-gray-800 text-sm">
+                {pessoas} {pessoas === 1 ? "pessoa" : "pessoas"}
+              </p>
+            </div>
+            <div className="bg-gray-50 rounded-xl p-4 text-center">
+              <p className="text-2xl mb-1">🎟️</p>
+              <p className="text-sm text-gray-500">Por pessoa</p>
+              <p className="font-semibold text-gray-800 text-sm">
+                {formatarBRL(subtotalIndividual)}
+              </p>
+            </div>
             <div className="bg-green-50 rounded-xl p-4 text-center">
               <p className="text-2xl mb-1">💰</p>
               <p className="text-sm text-green-700">Total</p>
-              <p className="font-bold text-green-800 text-sm">{formatarBRL(total)}</p>
+              <p className="font-bold text-green-800 text-sm">
+                {formatarBRL(total)}
+              </p>
             </div>
           </div>
         </div>
@@ -258,10 +360,24 @@ function DetalhesViagem() {
             </p>
           ) : (
             <div className="space-y-4">
+              <p className="text-xs text-gray-400 italic">
+                💡 Dica: arraste os passeios entre os dias para reorganizar.
+              </p>
               {dias.map((d) => {
                 const lista = pontosPorDia[d.numero] || []
+                const hover = overDia === d.numero
                 return (
-                  <div key={d.numero} className="border border-gray-200 rounded-xl p-4">
+                  <div
+                    key={d.numero}
+                    onDragOver={(e) => handleDragOver(e, d.numero)}
+                    onDragLeave={handleDragLeave}
+                    onDrop={(e) => handleDrop(e, d.numero)}
+                    className={`border rounded-xl p-4 transition ${
+                      hover
+                        ? "border-indigo-500 bg-indigo-50/40 ring-2 ring-indigo-200"
+                        : "border-gray-200"
+                    }`}
+                  >
                     <div className="flex items-center justify-between mb-2">
                       <div>
                         <p className="font-bold text-gray-800">
@@ -271,7 +387,9 @@ function DetalhesViagem() {
                           </span>
                         </p>
                         <p className="text-xs text-gray-500">
-                          {lista.length} {lista.length === 1 ? "passeio" : "passeios"} · {formatarBRL(subtotal(lista))}
+                          {lista.length}{" "}
+                          {lista.length === 1 ? "passeio" : "passeios"} ·{" "}
+                          {formatarBRL(subtotalDia(lista))}
                         </p>
                       </div>
                       <button
@@ -284,7 +402,7 @@ function DetalhesViagem() {
 
                     {lista.length === 0 ? (
                       <p className="text-xs text-gray-400 italic mt-2">
-                        Nenhum passeio programado para este dia.
+                        Nenhum passeio programado. Arraste um para ca ou clique em "+ Adicionar".
                       </p>
                     ) : (
                       <ul className="divide-y divide-gray-100">
@@ -293,16 +411,31 @@ function DetalhesViagem() {
                         ))}
                       </ul>
                     )}
+
+                    <NotaDoDia chave={d.numero} />
                   </div>
                 )
               })}
 
               {pontosSemDia.length > 0 && (
-                <div className="border border-amber-200 bg-amber-50/50 rounded-xl p-4">
+                <div
+                  onDragOver={(e) => handleDragOver(e, "sem")}
+                  onDragLeave={handleDragLeave}
+                  onDrop={(e) => handleDrop(e, "sem")}
+                  className={`border rounded-xl p-4 transition ${
+                    overDia === "sem"
+                      ? "border-amber-500 bg-amber-100/40 ring-2 ring-amber-200"
+                      : "border-amber-200 bg-amber-50/50"
+                  }`}
+                >
                   <div className="mb-2">
-                    <p className="font-bold text-amber-800">⏳ Sem dia definido</p>
+                    <p className="font-bold text-amber-800">
+                      ⏳ Sem dia definido
+                    </p>
                     <p className="text-xs text-amber-700">
-                      {pontosSemDia.length} {pontosSemDia.length === 1 ? "passeio" : "passeios"} · {formatarBRL(subtotal(pontosSemDia))}
+                      {pontosSemDia.length}{" "}
+                      {pontosSemDia.length === 1 ? "passeio" : "passeios"} ·{" "}
+                      {formatarBRL(subtotalDia(pontosSemDia))}
                     </p>
                   </div>
                   <ul className="divide-y divide-amber-100">
@@ -322,7 +455,7 @@ function DetalhesViagem() {
               ✨ Pontos turisticos em {viagem.destino}
             </h3>
             <p className="text-sm text-gray-500 mb-4">
-              Toque para adicionar a sua viagem (sem dia definido — depois e so escolher o dia no card).
+              Toque para adicionar a sua viagem. Depois e so arrastar pro dia certo.
             </p>
 
             <div className="grid sm:grid-cols-2 gap-3">
@@ -338,9 +471,13 @@ function DetalhesViagem() {
                   }`}
                 >
                   <div className="flex items-start justify-between gap-2">
-                    <p className="font-medium text-gray-800 text-sm">{s.nome}</p>
+                    <p className="font-medium text-gray-800 text-sm">
+                      {s.nome}
+                    </p>
                     {s.jaAdicionado && (
-                      <span className="text-green-700 text-xs">✓ adicionado</span>
+                      <span className="text-green-700 text-xs">
+                        ✓ adicionado
+                      </span>
                     )}
                   </div>
                   <div className="flex items-center gap-2 mt-1 text-xs">

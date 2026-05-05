@@ -17,6 +17,7 @@ function PontoTuristicoModal({
   const [categoria, setCategoria] = useState(
     pontoEditando?.categoria || "Outro"
   )
+  const [hora, setHora] = useState(pontoEditando?.hora || "")
   const [dia, setDia] = useState(() => {
     const inicial = pontoEditando?.dia ?? diaInicial
     return inicial == null ? "" : String(inicial)
@@ -28,6 +29,7 @@ function PontoTuristicoModal({
       nome: nome.trim(),
       valor: Number(valor) || 0,
       categoria,
+      hora,
       dia: dia === "" ? null : Number(dia),
     })
     onClose()
@@ -35,7 +37,7 @@ function PontoTuristicoModal({
 
   return (
     <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-2xl shadow-xl p-6 w-full max-w-md">
+      <div className="bg-white rounded-2xl shadow-xl p-6 w-full max-w-md max-h-[90vh] overflow-y-auto">
         <div className="flex items-center justify-between mb-5">
           <h3 className="text-lg font-bold text-gray-800">
             {editando ? "Editar passeio" : "Novo passeio"}
@@ -67,7 +69,7 @@ function PontoTuristicoModal({
           <div className="flex gap-3">
             <div className="flex-1">
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Valor (R$)
+                Valor por pessoa (R$)
               </label>
               <input
                 value={valor}
@@ -97,25 +99,38 @@ function PontoTuristicoModal({
             </div>
           </div>
 
-          {dias.length > 0 && (
-            <div>
+          <div className="flex gap-3">
+            {dias.length > 0 && (
+              <div className="flex-1">
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Dia
+                </label>
+                <select
+                  value={dia}
+                  onChange={(e) => setDia(e.target.value)}
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-400 bg-white"
+                >
+                  <option value="">Sem dia definido</option>
+                  {dias.map((d) => (
+                    <option key={d.numero} value={d.numero}>
+                      Dia {d.numero} - {d.dataFormatada}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
+            <div className="flex-1">
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Programar para qual dia?
+                Horario
               </label>
-              <select
-                value={dia}
-                onChange={(e) => setDia(e.target.value)}
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-400 bg-white"
-              >
-                <option value="">Sem dia definido</option>
-                {dias.map((d) => (
-                  <option key={d.numero} value={d.numero}>
-                    Dia {d.numero} - {d.dataFormatada} ({d.diaSemana})
-                  </option>
-                ))}
-              </select>
+              <input
+                value={hora}
+                onChange={(e) => setHora(e.target.value)}
+                type="time"
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-400"
+              />
             </div>
-          )}
+          </div>
 
           <div className="flex gap-3 pt-2">
             <button

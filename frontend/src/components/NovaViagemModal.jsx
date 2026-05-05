@@ -1,11 +1,6 @@
 import { useState } from "react"
 import { listaDestinos } from "../data/destinos"
 
-// Modal usado tanto para CRIAR quanto para EDITAR uma viagem.
-// Combina:
-//  - busca Nominatim (cidades do mundo todo)
-//  - datalist local com capitais que tem pontos turisticos sugeridos
-//  - modo edicao via prop viagemEditando
 function NovaViagemModal({ onClose, onSalvar, viagemEditando }) {
   const editando = Boolean(viagemEditando)
 
@@ -13,6 +8,9 @@ function NovaViagemModal({ onClose, onSalvar, viagemEditando }) {
   const [dataIda, setDataIda] = useState(viagemEditando?.dataIda || "")
   const [dataVolta, setDataVolta] = useState(viagemEditando?.dataVolta || "")
   const [descricao, setDescricao] = useState(viagemEditando?.descricao || "")
+  const [pessoas, setPessoas] = useState(
+    viagemEditando?.pessoas ? String(viagemEditando.pessoas) : "1"
+  )
   const [erro, setErro] = useState("")
 
   const [sugestoes, setSugestoes] = useState([])
@@ -50,15 +48,17 @@ function NovaViagemModal({ onClose, onSalvar, viagemEditando }) {
     setErro("")
 
     if (dataVolta && dataIda && dataVolta < dataIda) {
-      setErro("A data de volta deve ser posterior à data de ida.")
+      setErro("A data de volta deve ser posterior a data de ida.")
       return
     }
+    const numPessoas = Math.max(1, parseInt(pessoas, 10) || 1)
 
     onSalvar({
       destino: destino.trim(),
       dataIda,
       dataVolta,
       descricao: descricao.trim(),
+      pessoas: numPessoas,
     })
     onClose()
   }
@@ -68,7 +68,7 @@ function NovaViagemModal({ onClose, onSalvar, viagemEditando }) {
       <div className="bg-white rounded-2xl shadow-xl p-8 w-full max-w-md max-h-[90vh] overflow-y-auto">
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-xl font-bold text-gray-800">
-            {editando ? "Editar Viagem ✏️" : "Nova Viagem ✈️"}
+            {editando ? "Editar Viagem" : "Nova Viagem"}
           </h2>
           <button
             onClick={onClose}
@@ -89,7 +89,7 @@ function NovaViagemModal({ onClose, onSalvar, viagemEditando }) {
               value={destino}
               onChange={(e) => buscarCidades(e.target.value)}
               type="text"
-              placeholder="Ex: Paris, França"
+              placeholder="Ex: Paris, Franca"
               required
               className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-400"
             />
@@ -149,12 +149,30 @@ function NovaViagemModal({ onClose, onSalvar, viagemEditando }) {
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Descrição
+              Numero de viajantes
+            </label>
+            <input
+              value={pessoas}
+              onChange={(e) => setPessoas(e.target.value)}
+              type="number"
+              min="1"
+              max="50"
+              required
+              className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-400"
+            />
+            <p className="text-xs text-gray-400 mt-1">
+              O custo total dos passeios sera multiplicado por este numero.
+            </p>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Descricao
             </label>
             <textarea
               value={descricao}
               onChange={(e) => setDescricao(e.target.value)}
-              placeholder="Ex: Viagem de férias em família..."
+              placeholder="Ex: Viagem de ferias em familia..."
               rows={3}
               className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-400 resize-none"
             />
@@ -178,7 +196,7 @@ function NovaViagemModal({ onClose, onSalvar, viagemEditando }) {
               type="submit"
               className="flex-1 bg-indigo-600 text-white py-2 rounded-lg font-semibold hover:bg-indigo-700 transition"
             >
-              {editando ? "Salvar alterações" : "Criar viagem"}
+              {editando ? "Salvar alteracoes" : "Criar viagem"}
             </button>
           </div>
         </form>

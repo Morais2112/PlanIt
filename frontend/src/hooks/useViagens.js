@@ -3,6 +3,13 @@ import { useEffect, useState } from "react"
 const STORAGE_KEY = "planit:viagens"
 
 // Hook customizado: CRUD completo de viagens persistido em localStorage.
+// Schema da viagem:
+// {
+//   id, destino, dataIda, dataVolta, descricao,
+//   pessoas: number,
+//   pontosTuristicos: [{ id, nome, valor, categoria, dia, hora }],
+//   notasPorDia: { [diaNum]: string, "sem": string }
+// }
 export function useViagens() {
   const [viagens, setViagens] = useState(() => {
     try {
@@ -22,15 +29,15 @@ export function useViagens() {
   }, [viagens])
 
   function gerarId() {
-    return (
-      Date.now().toString(36) + Math.random().toString(36).slice(2, 8)
-    )
+    return Date.now().toString(36) + Math.random().toString(36).slice(2, 8)
   }
 
   function adicionarViagem(dados) {
     const nova = {
       id: gerarId(),
+      pessoas: 1,
       pontosTuristicos: [],
+      notasPorDia: {},
       ...dados,
     }
     setViagens((atuais) => [...atuais, nova])
@@ -54,6 +61,7 @@ export function useViagens() {
   function adicionarPonto(viagemId, ponto) {
     const novoPonto = {
       id: gerarId(),
+      hora: "",
       ...ponto,
       valor: Number(ponto.valor) || 0,
     }
@@ -78,7 +86,11 @@ export function useViagens() {
               ...v,
               pontosTuristicos: (v.pontosTuristicos || []).map((p) =>
                 p.id === pontoId
-                  ? { ...p, ...dados, valor: Number(dados.valor ?? p.valor) || 0 }
+                  ? {
+                      ...p,
+                      ...dados,
+                      valor: Number(dados.valor ?? p.valor) || 0,
+                    }
                   : p
               ),
             }
@@ -102,6 +114,23 @@ export function useViagens() {
     )
   }
 
+  function atualizarNotaDia(viagemId, dia, texto) {
+    const chave = dia == null ? "sem" : String(dia)
+    setViagens((atuais) =>
+      atuais.map((v) =>
+        v.id === viagemId
+          ? {
+              ...v,
+              notasPorDia: {
+                ...(v.notasPorDia || {}),
+                [chave]: texto,
+              },
+            }
+          : v
+      )
+    )
+  }
+
   return {
     viagens,
     adicionarViagem,
@@ -111,5 +140,6 @@ export function useViagens() {
     adicionarPonto,
     atualizarPonto,
     removerPonto,
+    atualizarNotaDia,
   }
 }

@@ -50,7 +50,6 @@ function Dashboard() {
     }
   }
 
-  // Filtra viagens pelo destino
   const viagensFiltradas = useMemo(() => {
     if (!busca.trim()) return viagens
     const termo = busca.toLowerCase()
@@ -60,10 +59,12 @@ function Dashboard() {
   }, [viagens, busca])
 
   function calcularTotal(viagem) {
-    return (viagem.pontosTuristicos || []).reduce(
+    const pessoas = Math.max(1, Number(viagem.pessoas) || 1)
+    const soma = (viagem.pontosTuristicos || []).reduce(
       (acc, p) => acc + (Number(p.valor) || 0),
       0
     )
+    return soma * pessoas
   }
 
   function bandeira(destino) {
@@ -116,6 +117,7 @@ function Dashboard() {
         ) : (
           <div className="grid gap-4">
             {viagensFiltradas.map((viagem) => {
+              const pessoas = Math.max(1, Number(viagem.pessoas) || 1)
               const total = calcularTotal(viagem)
               const qtd = (viagem.pontosTuristicos || []).length
               return (
@@ -138,6 +140,9 @@ function Dashboard() {
                     <div className="flex flex-wrap gap-2 mt-2 text-xs">
                       <span className="bg-indigo-50 text-indigo-700 px-2 py-1 rounded-full">
                         🎟️ {qtd} {qtd === 1 ? "passeio" : "passeios"}
+                      </span>
+                      <span className="bg-purple-50 text-purple-700 px-2 py-1 rounded-full">
+                        👥 {pessoas} {pessoas === 1 ? "pessoa" : "pessoas"}
                       </span>
                       <span className="bg-green-50 text-green-700 px-2 py-1 rounded-full">
                         💰 {formatarBRL(total)}
