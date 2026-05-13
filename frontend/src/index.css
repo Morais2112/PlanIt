@@ -1,1 +1,22 @@
 @import "tailwindcss";
+
+/* Habilita a variante dark: usando classe .dark no <html> (Tailwind v4) */
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* ===== Estilos de impressão / PDF ===== */
+@media print {
+  .no-print { display: none !important; }
+  body {
+    background: white !important;
+    color: black !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  .border.rounded-xl,
+  [class*="rounded-xl"] {
+    page-break-inside: avoid;
+  }
+  textarea:placeholder-shown {
+    display: none !important;
+  }
+}

@@ -10,16 +10,18 @@ function ConfirmModal({
 }) {
   return (
     <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-2xl shadow-xl p-6 w-full max-w-sm">
-        <h3 className="text-lg font-bold text-gray-800 mb-2">{titulo}</h3>
+      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-6 w-full max-w-sm">
+        <h3 className="text-lg font-bold text-gray-800 dark:text-gray-100 mb-2">
+          {titulo}
+        </h3>
         {mensagem && (
-          <p className="text-sm text-gray-600 mb-5">{mensagem}</p>
+          <p className="text-sm text-gray-600 dark:text-gray-300 mb-5">{mensagem}</p>
         )}
 
         <div className="flex gap-3">
           <button
             onClick={onCancelar}
-            className="flex-1 border border-gray-300 text-gray-700 py-2 rounded-lg font-semibold hover:bg-gray-50 transition"
+            className="flex-1 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 py-2 rounded-lg font-semibold hover:bg-gray-50 dark:hover:bg-gray-700 transition"
           >
             {textoCancelar}
           </button>
