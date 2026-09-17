@@ -3,9 +3,11 @@ import { useEffect, useState } from "react"
 const CACHE_KEY = "planit:cotacoes"
 const CACHE_TTL_MS = 60 * 60 * 1000 // 1 hora
 
+// Fallback aproximado (BRL por 1 unidade)
 const COTACOES_FALLBACK = {
   USD: 5.5, EUR: 6.0, GBP: 7.0, JPY: 0.037,
   ARS: 0.005, CHF: 6.2, AUD: 3.6, MXN: 0.27,
+  CZK: 0.24, THB: 0.16, KRW: 0.004, PEN: 1.45, CLP: 0.0055,
 }
 
 function lerCache() {
@@ -14,16 +16,12 @@ function lerCache() {
     if (!raw) return null
     const { dados, timestamp } = JSON.parse(raw)
     if (Date.now() - timestamp < CACHE_TTL_MS) return dados
-  } catch {
-    // ignore
-  }
+  } catch { /* ignore */ }
   return null
 }
 
 export function useCotacoes() {
-  const [cotacoes, setCotacoes] = useState(
-    () => lerCache() || COTACOES_FALLBACK
-  )
+  const [cotacoes, setCotacoes] = useState(() => lerCache() || COTACOES_FALLBACK)
 
   useEffect(() => {
     if (lerCache()) return
@@ -31,7 +29,7 @@ export function useCotacoes() {
     async function buscar() {
       try {
         const res = await fetch(
-          "https://economia.awesomeapi.com.br/last/USD-BRL,EUR-BRL,GBP-BRL,JPY-BRL,ARS-BRL,CHF-BRL,AUD-BRL,MXN-BRL"
+          "https://economia.awesomeapi.com.br/last/USD-BRL,EUR-BRL,GBP-BRL,JPY-BRL,ARS-BRL,CHF-BRL,AUD-BRL,MXN-BRL,CZK-BRL,THB-BRL,KRW-BRL,PEN-BRL,CLP-BRL"
         )
         if (!res.ok) throw new Error("api error")
         const data = await res.json()
@@ -39,7 +37,9 @@ export function useCotacoes() {
         const pares = [
           ["USDBRL", "USD"], ["EURBRL", "EUR"], ["GBPBRL", "GBP"],
           ["JPYBRL", "JPY"], ["ARSBRL", "ARS"], ["CHFBRL", "CHF"],
-          ["AUDBRL", "AUD"], ["MXNBRL", "MXN"],
+          ["AUDBRL", "AUD"], ["MXNBRL", "MXN"], ["CZKBRL", "CZK"],
+          ["THBBRL", "THB"], ["KRWBRL", "KRW"], ["PENBRL", "PEN"],
+          ["CLPBRL", "CLP"],
         ]
         pares.forEach(([chave, codigo]) => {
           if (data[chave]?.bid) novo[codigo] = parseFloat(data[chave].bid)
@@ -51,13 +51,9 @@ export function useCotacoes() {
               CACHE_KEY,
               JSON.stringify({ dados: novo, timestamp: Date.now() })
             )
-          } catch {
-            // ignore
-          }
+          } catch { /* ignore */ }
         }
-      } catch {
-        // mantém fallback
-      }
+      } catch { /* mantém fallback */ }
     }
     buscar()
     return () => { cancelado = true }
