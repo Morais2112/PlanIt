@@ -15,6 +15,7 @@ import ConfirmModal from "../components/ConfirmModal"
 import HospedagemBlock from "../components/HospedagemBlock"
 import VoosBlock from "../components/VoosBlock"
 import ChecklistBlock from "../components/ChecklistBlock"
+import MapaBlock from "../components/MapaBlock"
 
 function ordenarPorHora(lista) {
   return [...lista].sort((a, b) => {
@@ -297,6 +298,8 @@ function DetalhesViagem() {
         </div>
 
         <HospedagemBlock hospedagem={viagem.hospedagem}
+          destino={viagem.destino}
+          destinoCoords={destinos[viagem.destino]?.coords || null}
           onSalvar={(d) => atualizarHospedagem(viagem.id, d)}
           onRemover={() => removerHospedagem(viagem.id)} />
 
@@ -310,6 +313,13 @@ function DetalhesViagem() {
           onAtualizar={(id, d) => atualizarChecklistItem(viagem.id, id, d)}
           onRemover={(id) => removerChecklistItem(viagem.id, id)}
           onCarregarTemplate={(itens) => carregarTemplateChecklist(viagem.id, itens)} />
+
+        <MapaBlock
+          destino={viagem.destino}
+          centroBase={destinos[viagem.destino]?.coords || null}
+          pontos={viagem.pontosTuristicos || []}
+          hospedagem={viagem.hospedagem}
+        />
 
         <div className="bg-white dark:bg-gray-800 rounded-2xl shadow p-6 print:shadow-none print:p-2">
           <div className="flex items-center justify-between mb-4">
