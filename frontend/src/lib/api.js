@@ -1,5 +1,8 @@
 // Cliente HTTP simples pro backend do PlanIt
-const API_URL = "http://localhost:3001/api"
+//
+// Em produção, defina VITE_API_URL no build com a URL pública da API.
+// O padrão aponta para o backend local do ambiente de desenvolvimento.
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3001/api"
 
 async function request(metodo, caminho, { token, body } = {}) {
   const headers = { "Content-Type": "application/json" }
