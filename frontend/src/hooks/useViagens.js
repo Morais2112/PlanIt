@@ -39,7 +39,15 @@ export function useViagens() {
     try { localStorage.setItem(chave, JSON.stringify(viagens)) } catch { /* ignore */ }
     if (!token) return
     const timer = setTimeout(() => {
-      api.setViagens(token, viagens).catch(() => { /* sync falhou */ })
+      api.setViagens(token, viagens).catch((err) => {
+        // Estar offline é esperado e não é erro — os dados já estão no
+        // localStorage e sobem na próxima edição. Mas uma rejeição do
+        // servidor (payload inválido, limite excedido) precisa aparecer:
+        // silenciar aqui faria o app parar de sincronizar sem aviso.
+        if (navigator.onLine) {
+          console.error("Falha ao sincronizar viagens com o servidor:", err)
+        }
+      })
     }, 600)
     return () => clearTimeout(timer)
   }, [viagens, token, chave])
@@ -114,18 +122,36 @@ export function useViagens() {
   }
 
   // ===== Import / Export =====
+
+  // Arquivos de backup podem vir de versões antigas do app ou ter sido
+  // editados à mão, então o id nunca é garantido na entrada. O backend
+  // exige id único em toda viagem e rejeita o lote inteiro sem isso —
+  // normalizamos aqui para o import não quebrar a sincronização.
+  function normalizarImportadas(lista, idsExistentes = new Set()) {
+    const vistos = new Set(idsExistentes)
+    const saida = []
+    for (const v of lista) {
+      if (!v || typeof v !== "object" || Array.isArray(v)) continue
+      const tipoOk = typeof v.id === "string" || typeof v.id === "number"
+      let id = tipoOk && !vistos.has(v.id) ? v.id : gerarId()
+      // gerarId() usa o timestamp + aleatório; no mesmo milissegundo a
+      // colisão é improvável, mas aqui ela sairia cara — o backend
+      // rejeitaria o lote inteiro por id duplicado.
+      while (vistos.has(id)) id = gerarId()
+      vistos.add(id)
+      saida.push({ ...v, id })
+    }
+    return saida
+  }
+
   function substituirViagens(novas) {
-    setViagens(Array.isArray(novas) ? novas : [])
+    setViagens(Array.isArray(novas) ? normalizarImportadas(novas) : [])
   }
   function mesclarViagens(novas) {
     if (!Array.isArray(novas)) return
     setViagens((atuais) => {
       const idsExistentes = new Set(atuais.map((v) => v.id))
-      const importadas = novas.map((v) => {
-        if (!v.id || idsExistentes.has(v.id)) return { ...v, id: gerarId() }
-        return v
-      })
-      return [...atuais, ...importadas]
+      return [...atuais, ...normalizarImportadas(novas, idsExistentes)]
     })
   }
 
