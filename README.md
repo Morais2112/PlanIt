@@ -118,6 +118,7 @@ Exportar o roteiro usa `@media print` no CSS e `window.print()`, em vez de jsPDF
 
 Um script no `main.jsx` lê a preferência salva e aplica a classe `dark` no `<html>` **antes** do React montar. Sem isso, todo carregamento no modo escuro pisca branco por alguns frames.
 
+<<<<<<< HEAD
 ### Segurança do backend
 
 O backend é pequeno, mas expõe autenticação — e isso traz um conjunto de responsabilidades que não dá para adiar:
@@ -134,6 +135,8 @@ O backend é pequeno, mas expõe autenticação — e isso traz um conjunto de r
 
 **Trade-off assumido:** persistência em arquivo JSON não suporta escrita concorrente — duas requisições simultâneas do mesmo usuário podem sobrescrever uma à outra. Na prática não aparece, porque o cliente sincroniza com debounce e cada conta escreve sozinha. É o primeiro item a mudar se o projeto sair do uso pessoal.
 
+=======
+>>>>>>> 68a48c7f2cdedaf41b7e6807fcd449e3e0067637
 ---
 
 ## 💻 Como rodar
@@ -141,7 +144,11 @@ O backend é pequeno, mas expõe autenticação — e isso traz um conjunto de r
 Pré-requisitos: Node.js 18 ou superior.
 
 ```bash
+<<<<<<< HEAD
 git clone https://github.com/seu-usuario/planit.git
+=======
+git clone https://github.com/Morais2112/planit.git
+>>>>>>> 68a48c7f2cdedaf41b7e6807fcd449e3e0067637
 cd planit
 ```
 
@@ -166,6 +173,7 @@ npm run dev             # http://localhost:5173
 
 Crie sua conta na tela de cadastro e comece a planejar.
 
+<<<<<<< HEAD
 ### Variáveis de ambiente
 
 | Arquivo | Variável | Padrão | Obrigatória |
@@ -178,12 +186,15 @@ Crie sua conta na tela de cadastro e comece a planejar.
 > Variáveis `VITE_*` são embutidas no bundle durante o build e ficam visíveis
 > para quem abrir o site. Nada de segredo nelas — chaves e tokens ficam no backend.
 
+=======
+>>>>>>> 68a48c7f2cdedaf41b7e6807fcd449e3e0067637
 ---
 
 ## 🔌 API
 
 Todas as rotas abaixo de `/api/me` exigem o header `Authorization: Bearer <token>`.
 
+<<<<<<< HEAD
 | Método | Rota | Descrição | Limite |
 |---|---|---|---|
 | `GET`  | `/api/health`   | Verificação de disponibilidade | — |
@@ -197,6 +208,16 @@ Erros seguem o formato `{ "erro": "mensagem" }`. Os códigos usados são `400`
 (dados inválidos), `401` (token ausente, inválido ou credenciais incorretas),
 `409` (email já cadastrado), `413` (corpo grande demais) e `429` (limite de
 tentativas atingido — acompanha o header `Retry-After`).
+=======
+| Método | Rota | Descrição |
+|---|---|---|
+| `GET`  | `/api/health`   | Verificação de disponibilidade |
+| `POST` | `/api/register` | Cria conta → `{ token, user }` |
+| `POST` | `/api/login`    | Autentica → `{ token, user }` |
+| `GET`  | `/api/me`       | Dados do usuário autenticado |
+| `GET`  | `/api/viagens`  | Lista as viagens do usuário |
+| `PUT`  | `/api/viagens`  | Substitui as viagens do usuário |
+>>>>>>> 68a48c7f2cdedaf41b7e6807fcd449e3e0067637
 
 ---
 
